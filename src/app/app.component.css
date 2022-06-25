@@ -1,0 +1,19 @@
+#board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* >>>div {
+  width: 75px;
+  height: 75px;
+}
+
+>>>.dark {
+  background-color: #842A0D;
+}
+
+
+>>>.ligth {
+  background-color: #F1CDC1;
+} */
