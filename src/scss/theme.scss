@@ -1,0 +1,10 @@
+// default colors
+.theme-wrapper {
+    --secondary-color: rgb(4, 70, 10);
+    --main-color: rgb(194, 191, 243);
+}
+// pass variables into a sass map
+$variables: (
+    --secondary-color: var(--secondary-color),
+    --main-color: var(--main-color),
+);

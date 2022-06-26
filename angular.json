@@ -24,7 +24,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/scss/styles.scss"
             ],
             "scripts": []
           },
@@ -88,7 +88,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/scss/styles.scss"
             ],
             "scripts": []
           }
@@ -119,6 +119,12 @@
           }
         }
       }
-    }},
-  "defaultProject": "Chess"
+    }
+  },
+  "defaultProject": "Chess",
+  "schematics": {
+    "@schematics/angular:component": {
+      "style": "scss"
+    }
+  }
 }
