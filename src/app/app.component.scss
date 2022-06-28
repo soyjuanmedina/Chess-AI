@@ -1,25 +1,34 @@
+@import '../scss/styles.scss';
+
 #board {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-::ng-deep div {
-  width: 50px;
+.colorPicker {
+  width: 100%;
   height: 50px;
 }
 
+::ng-deep .square {
+  width: $squareSize;
+  height: $squareSize;
+}
+
 ::ng-deep .dark {
-  background-color: #842A0D;
+  background-color: $darkColor;
+  ;
 }
 
 
 ::ng-deep .ligth {
-  background-color: #F1CDC1;
+  background-color: $ligthColor;
 }
 
 
-#div1, #div2 {
+#div1,
+#div2 {
   float: left;
   width: 100px;
   height: 35px;
