@@ -65,6 +65,8 @@ export class AppComponent implements OnInit {
         row.appendChild(square);
         square.setAttribute("id", 'sq' + i);
         square.classList.add('square');
+        square.addEventListener("dragover", this.allowDrop);
+        square.addEventListener("drop", this.drop.bind(this));
         if (x % 2 == 0) {
           if (y % 2 == 0) {
             square.classList.add('ligth');
@@ -115,7 +117,6 @@ export class AppComponent implements OnInit {
   }
 
   drawPiece(color, piece, square) {
-    console.log('square', square);
     // let position = String.fromCharCode(97 + x) + (y + 1);
     let innerDiv = document.getElementById('sq' + square);
     let img: HTMLImageElement = document.createElement("img");
@@ -157,17 +158,20 @@ export class AppComponent implements OnInit {
   }
 
   drag(ev) {
-    this._moveService.generateSlideMovings(1, 'p');
-    ev.dataTransfer.setData("pieceId", ev.target.id);
-    ev.dataTransfer.setData("pieceSrc", ev.target.src);
+    let pieceId = ev.target.id;
+    let pieceSrc = ev.target.src;
+    let square =  ev.target.parentNode.id;
+    ev.dataTransfer.setData("pieceId", pieceId);
+    ev.dataTransfer.setData("pieceSrc", pieceSrc);
+    this._moveService.generateSlideMovings(square, pieceId);
     /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
         audio.play(); */
   }
 
   drop(ev) {
     ev.preventDefault();
-    let pieceSrc = ev.dataTransfer.getData("pieceSrc");
     let pieceId = ev.dataTransfer.getData("pieceId");
+    let pieceSrc = ev.dataTransfer.getData("pieceSrc");
     if (ev.target.getAttribute('src')) {
       ev.target.setAttribute('src', pieceSrc);
     }
