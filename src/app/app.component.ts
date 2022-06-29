@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ConfigurationService } from './services/configuration.service';
+import { MoveService } from './services/move.service';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +18,7 @@ export class AppComponent implements OnInit {
 
   boardConfiguration: FormGroup;
 
-  constructor(public _configurationService: ConfigurationService) {
+  constructor(public _configurationService: ConfigurationService, public _moveService: MoveService) {
     this.boardConfiguration = new FormGroup({
       ligthColor: new FormControl(),
       darkColor: new FormControl(),
@@ -32,29 +33,57 @@ export class AppComponent implements OnInit {
 
   loadPositionFromFem(fen: string) {
     let fenBoard: string = fen.split(' ')[0];
-    let x: number = 0;
-    let y: number = 0;
+    let square: number = 1;
     [...fenBoard].forEach(symbol => {
       if (symbol == '/') {
-        x = 0;
-        y++;
+
       } else {
         if (symbol >= '0' && symbol <= '9') {
-          x = x + parseInt(symbol);
+          square = square + parseInt(symbol);
         } else {
           let color: string = 'w';
           if (symbol == symbol.toLowerCase()) {
             color = 'b';
           }
           let piece = symbol.toLowerCase();
-          this.drawPiece(color, piece, x, y);
-          x++;
+          this.drawPiece(color, piece, square);
+          square++;
         }
       }
     });
   }
 
   drawBoard() {
+    let i = 1
+    var section = document.querySelector('#board');
+    for (var y = 0; y <= 7; y++) {
+      var row = document.createElement("div");
+      section.appendChild(row);
+      row.classList.add('row');
+      for (var x = 0; x <= 7; x++) {
+        var square = document.createElement("div");
+        row.appendChild(square);
+        square.setAttribute("id", 'sq' + i);
+        square.classList.add('square');
+        if (x % 2 == 0) {
+          if (y % 2 == 0) {
+            square.classList.add('ligth');
+          } else {
+            square.classList.add('dark');
+          }
+        } else {
+          if (y % 2 != 0) {
+            square.classList.add('ligth');
+          } else {
+            square.classList.add('dark');
+          }
+        }
+        i++;
+      }
+    }
+  }
+
+  drawBoard2() {
     var section = document.querySelector('#board');
     for (var x = 0; x <= 7; x++) {
       var row = document.createElement("div");
@@ -85,32 +114,17 @@ export class AppComponent implements OnInit {
 
   }
 
-  drawPiece(color, piece, x, y) {
-    let position = String.fromCharCode(97 + x) + (y + 1);
-    let innerDiv = document.getElementById(position);
+  drawPiece(color, piece, square) {
+    console.log('square', square);
+    // let position = String.fromCharCode(97 + x) + (y + 1);
+    let innerDiv = document.getElementById('sq' + square);
     let img: HTMLImageElement = document.createElement("img");
     img.src = 'assets/pieces/' + color + piece + '.png';
     img.classList.add('square');
-    img.setAttribute("id", color + piece + position);
+    img.setAttribute("id", color + piece + square);
     img.setAttribute("draggable", "true");
-    img.addEventListener('dragstart', this.drag);
+    img.addEventListener('dragstart', this.drag.bind(this));
     innerDiv.appendChild(img);
-  }
-
-  // Funciones Drag & Drop
-
-  allowDrop(ev) {
-    ev.preventDefault();
-  }
-
-  drag(ev) {
-    ev.dataTransfer.setData("piece", ev.target.id);
-  }
-
-  drop(ev) {
-    ev.preventDefault();
-    var data = ev.dataTransfer.getData("piece");
-    ev.target.appendChild(document.getElementById(data));
   }
 
   ngOnInit() {
@@ -134,6 +148,34 @@ export class AppComponent implements OnInit {
     let value = this.boardConfiguration.controls[parameter].value;
     this._configurationService.updateParameter(parameter, value);
     this.cancelEdit();
+  }
+
+  // Funciones Drag & Drop
+
+  allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  drag(ev) {
+    this._moveService.generateSlideMovings(1, 'p');
+    ev.dataTransfer.setData("pieceId", ev.target.id);
+    ev.dataTransfer.setData("pieceSrc", ev.target.src);
+    /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
+        audio.play(); */
+  }
+
+  drop(ev) {
+    ev.preventDefault();
+    let pieceSrc = ev.dataTransfer.getData("pieceSrc");
+    let pieceId = ev.dataTransfer.getData("pieceId");
+    if (ev.target.getAttribute('src')) {
+      ev.target.setAttribute('src', pieceSrc);
+    }
+    ev.target.appendChild(document.getElementById(pieceId));
+    /*     let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
+        audio.play(); */
+    // ev.target.removeChild(document.getElementById('wph7'));
+
   }
 
 }

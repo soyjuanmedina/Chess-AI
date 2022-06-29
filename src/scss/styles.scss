@@ -4,3 +4,22 @@
 $ligthColor: var(--ligthColor);
 $darkColor: var(--darkColor);
 $squareSize: var(--squareSize);
+
+#board {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+}
+
+.colorPicker {
+  width: 100%;
+  height: 50px;
+}
+
+.mark {
+  border: 15px solid #000;
+}
+
+.row {
+  display: flex;
+}
