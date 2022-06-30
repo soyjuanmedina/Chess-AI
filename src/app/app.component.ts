@@ -85,37 +85,6 @@ export class AppComponent implements OnInit {
     }
   }
 
-  drawBoard2() {
-    var section = document.querySelector('#board');
-    for (var x = 0; x <= 7; x++) {
-      var row = document.createElement("div");
-      section.appendChild(row);
-      for (var y = 0; y <= 7; y++) {
-        var element = document.createElement("div");
-        row.appendChild(element);
-        let position = String.fromCharCode(97 + x) + (y + 1);
-        element.setAttribute("id", position);
-        element.classList.add('square');
-        element.addEventListener("dragover", this.allowDrop);
-        element.addEventListener("drop", this.drop.bind(this));
-        if (x % 2 == 0) {
-          if (y % 2 == 0) {
-            element.classList.add('ligth');
-          } else {
-            element.classList.add('dark');
-          }
-        } else {
-          if (y % 2 != 0) {
-            element.classList.add('ligth');
-          } else {
-            element.classList.add('dark');
-          }
-        }
-      }
-    }
-
-  }
-
   drawPiece(color, piece, square) {
     // let position = String.fromCharCode(97 + x) + (y + 1);
     let innerDiv = document.getElementById('sq' + square);
@@ -160,10 +129,10 @@ export class AppComponent implements OnInit {
   drag(ev) {
     let pieceId = ev.target.id;
     let pieceSrc = ev.target.src;
-    let square =  ev.target.parentNode.id;
+    let squareId =  ev.target.parentNode.id;
     ev.dataTransfer.setData("pieceId", pieceId);
     ev.dataTransfer.setData("pieceSrc", pieceSrc);
-    this._moveService.generateSlideMovings(square, pieceId);
+    this._moveService.generateSlideMovings(squareId, pieceId);
     /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
         audio.play(); */
   }
@@ -178,8 +147,8 @@ export class AppComponent implements OnInit {
     ev.target.appendChild(document.getElementById(pieceId));
     /*     let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
         audio.play(); */
-    // ev.target.removeChild(document.getElementById('wph7'));
-
+    ev.target.parentElement.parentElement.querySelectorAll( ".square" ).forEach( e =>
+      e.classList.remove( "posibleMove" ) );
   }
 
 }

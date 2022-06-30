@@ -6,7 +6,7 @@ import { Move } from "../interfaces/move.interface";
 })
 export class MoveService {
 
-  directionOffsets: Array<number> = [8, -8, 1, -1, 7, -7, 9, -9];
+  directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   moves: Array<Move>;
 
@@ -34,28 +34,29 @@ export class MoveService {
           numSouth,
           numWest,
           numEast,
-          minNW,
-          minSE,
           minNE,
+          minSE,
+          minNW,
           minSW
         ]
       }
       
     }
+    console.log('this.numSquaresToEdge', this.numSquaresToEdge[54]  );
   }
 
   generateMoves() {
 
   }
 
-  generateSlideMovings(startSquare, piece) {
-    startSquare = parseInt(startSquare. slice(2));
-    console.log('startSquare, piece', startSquare, piece);
+  generateSlideMovings(startSquareId, piece) {
+    let startSquare = parseInt(startSquareId. slice(2));
     this.moves = [];
     // let square = document.getElementById(startSquare);
     // square.classList.add('mark');
     for (let directionIndex = 0; directionIndex < 8; directionIndex++) {
-      for (let n = 0; n < this.numSquaresToEdge[15][5]; n++) {
+      for (let n = 0; n < this.numSquaresToEdge[startSquare][directionIndex]; n++) {
+        // console.log('dsfa');
         let targetSquare = startSquare + this.directionOffsets[directionIndex] * (n + 1);
         let move: Move = {
           startSquare: startSquare,
@@ -64,6 +65,12 @@ export class MoveService {
         this.moves.push(move);
       }
     }
-    console.log('this.moves', this.moves); 
+    console.log('this.moves', this.moves);
+    this.moves.forEach(move => {
+      let targetSquareId = 'sq' + move.targetSquare;
+      let square = document.getElementById(targetSquareId);
+      square.classList.add('posibleMove');
+  });
+    
   }
 }
