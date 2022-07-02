@@ -17,7 +17,13 @@ $squareSize: var(--squareSize);
 }
 
 .posibleMove {
-  background-color: blueviolet!important
+  border: 2px solid #000;
+  border-radius: 30%;
+}
+
+.posibleCapture {
+  // border: 2px solid red;
+  opacity: 0.6;
 }
 
 .row {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Move } from "../interfaces/move.interface";
+import { Piece } from '../interfaces/piece.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ export class MoveService {
   numSquaresToEdge = [[]];
   moves: Array<Move>;
 
-  constructor() { 
+  constructor() {
     this.preComputedMoveData();
     // this.generateSlideMovings(35, 'piece')
   }
@@ -35,42 +36,84 @@ export class MoveService {
           numWest,
           numEast,
           minNE,
-          minSE,
+          minSW,
           minNW,
-          minSW
+          minSE
         ]
       }
-      
+
     }
-    console.log('this.numSquaresToEdge', this.numSquaresToEdge[54]  );
+    // console.log('this.numSquaresToEdge', this.numSquaresToEdge[54]);
   }
 
   generateMoves() {
 
   }
 
-  generateSlideMovings(startSquareId, piece) {
-    let startSquare = parseInt(startSquareId. slice(2));
+  getPiece(pieceId: string) {
+    let piece: Piece = {
+      type: pieceId.charAt(1),
+      color: pieceId.charAt(0)
+    };
+    return piece;
+  }
+
+  generateSlideMovings(startSquareId, pieceId) {
+    let piece = this.getPiece(pieceId);
+    let startSquare = parseInt(startSquareId.slice(2));
     this.moves = [];
     // let square = document.getElementById(startSquare);
     // square.classList.add('mark');
     for (let directionIndex = 0; directionIndex < 8; directionIndex++) {
       for (let n = 0; n < this.numSquaresToEdge[startSquare][directionIndex]; n++) {
-        // console.log('dsfa');
         let targetSquare = startSquare + this.directionOffsets[directionIndex] * (n + 1);
+        let targetSquareId = 'sq' + targetSquare;
+        let square = document.getElementById(targetSquareId);
         let move: Move = {
           startSquare: startSquare,
           targetSquare: targetSquare
         }
-        this.moves.push(move);
+        if (!square.hasChildNodes()) {
+          this.moves.push(move);
+        } else {
+          let pieceId = square.getElementsByTagName('img')[0].id;
+          let targetPiece = this.getPiece(pieceId);
+          if (piece.color != targetPiece.color) {
+            move.type = 'posibleCapture';
+            this.moves.push(move);
+          }
+          n = this.numSquaresToEdge[startSquare][directionIndex];
+        }
       }
     }
-    console.log('this.moves', this.moves);
-    this.moves.forEach(move => {
+    for (let i = 0; i < this.moves.length; i++) {
+      console.log('this.moves[i]', this.moves[i].type);
+      let targetSquareId = 'sq' + this.moves[i].targetSquare;
+      let square = document.getElementById(targetSquareId);
+      if (this.moves[i].type == 'posibleCapture') {
+        square.classList.add('posibleCapture');
+      } else {
+        square.classList.add('posibleMove');
+      }
+      square.addEventListener("dragover", this.allowDrop);
+    }
+    /* this.moves.forEach(move => {
       let targetSquareId = 'sq' + move.targetSquare;
       let square = document.getElementById(targetSquareId);
-      square.classList.add('posibleMove');
-  });
-    
+      if (square.hasChildNodes()) {
+        let pieceId = square.getElementsByTagName('img')[0].id;
+        let targetPiece = this.getPiece(pieceId);
+        if (piece.color != targetPiece.color) {
+          square.classList.add('posibleCapture');
+        }
+      } else {
+        square.classList.add('posibleMove');
+      }
+    }); */
+
+  }
+
+  allowDrop(ev) {
+    ev.preventDefault();
   }
 }
