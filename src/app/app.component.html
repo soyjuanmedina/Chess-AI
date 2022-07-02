@@ -21,7 +21,8 @@
         <div class="form-group col-md-4">
           <p class="text-center font-weight-bold">COLOR CLARO</p>
           <div class="input-group">
-            <input class="form-control" type="color" class="colorPicker" name="ligthColor" formControlName="ligthColor"
+            <input class="form-control" type="color" class="colorPicker" name="ligthColor"
+              formControlName="ligthColor"
               [(ngModel)]=_configurationService.configuration.ligthColor>
             <br /><br />
             <button *ngIf="editItem != 'ligthColor'" class="btn btn-primary btn-block mb-1 mt-1"
@@ -30,16 +31,16 @@
             <button *ngIf="editItem == 'ligthColor'" class="btn btn-primary btn-block mt-1"
               (click)="cancelEdit()">Cancelar
             </button>
-            <button *ngIf="editItem == 'ligthColor'" type="submit" class="btn btn-primary btn-block mt-1"
-              (click)="update('ligthColor')">Actualizar
+            <button *ngIf="editItem == 'ligthColor'" type="submit"
+              class="btn btn-primary btn-block mt-1" (click)="update('ligthColor')">Actualizar
             </button>
           </div>
         </div>
         <div class="form-group col-md-4">
           <p class="text-center font-weight-bold">COLOR OSCURO</p>
           <div class="input-group">
-            <input class="form-control" type="color" class="colorPicker" name="darkColor" formControlName="darkColor"
-              [(ngModel)]=_configurationService.configuration.darkColor>
+            <input class="form-control" type="color" class="colorPicker" name="darkColor"
+              formControlName="darkColor" [(ngModel)]=_configurationService.configuration.darkColor>
             <br /><br />
             <button *ngIf="editItem != 'darkColor'" class="btn btn-primary btn-block mb-1 mt-1"
               (click)="edit('darkColor')">Editar
@@ -47,16 +48,16 @@
             <button *ngIf="editItem == 'darkColor'" class="btn btn-primary btn-block mt-1"
               (click)="cancelEdit()">Cancelar
             </button>
-            <button *ngIf="editItem == 'darkColor'" type="submit" class="btn btn-primary btn-block mt-1"
-              (click)="update('darkColor')">Actualizar
+            <button *ngIf="editItem == 'darkColor'" type="submit"
+              class="btn btn-primary btn-block mt-1" (click)="update('darkColor')">Actualizar
             </button>
           </div>
         </div>
         <div class="form-group col-md-4">
           <p class="text-center font-weight-bold">TAMAÑO CASILLA</p>
           <div class="input-group">
-            <input class="form-control" type="number" class="form-control" name="squareSize" step="5"
-              formControlName="squareSize" min="20" max="150"
+            <input class="form-control" type="number" class="form-control" name="squareSize"
+              step="5" formControlName="squareSize" min="20" max="150"
               [(ngModel)]=_configurationService.configuration.squareSize>
             <br /><br />
             <button *ngIf="editItem != 'squareSize'" class="btn btn-primary btn-block mb-1 mt-1"
@@ -65,8 +66,8 @@
             <button *ngIf="editItem == 'squareSize'" class="btn btn-primary btn-block mt-1"
               (click)="cancelEdit()">Cancelar
             </button>
-            <button *ngIf="editItem == 'squareSize'" type="submit" class="btn btn-primary btn-block mt-1"
-              (click)="update('squareSize')">Actualizar
+            <button *ngIf="editItem == 'squareSize'" type="submit"
+              class="btn btn-primary btn-block mt-1" (click)="update('squareSize')">Actualizar
             </button>
           </div>
         </div>
@@ -82,3 +83,6 @@
 </h4>
 
 <section id="board"></section>
+
+
+<div class="square possibleMove"></div>

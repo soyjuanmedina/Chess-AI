@@ -11,7 +11,7 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   moves: Array<Move>;
-  FEN: string = '8/2q5/5r2/8/2Q5/5N2/3B4/8 w KQkq - 0 1';
+  FEN: string = '8/2p5/5r2/8/2Q5/5N2/3P4/8 w KQkq - 0 1';
   colorToMove = 'w'
 
   constructor(public _resourcesService: ResourcesService) {
@@ -46,14 +46,45 @@ export class MoveService {
       }
 
     }
-    // console.log('this.numSquaresToEdge', this.numSquaresToEdge[54]);
   }
 
   generateMoves(startSquareId, pieceId) {
     let piece = this._resourcesService.getPiece(pieceId);
-    if (this.colorToMove == piece.color && this._resourcesService.isSlidingPiece(piece)) {
-      this.generateSlideMovings(startSquareId, piece);
+    if (this.colorToMove == piece.color) {
+      if (this._resourcesService.isSlidingPiece(piece)) {
+        this.generateSlideMovings(startSquareId, piece);
+      } else if (piece.type == 'p') {
+        this.generatePawnMovings(startSquareId, piece);
+      }
+
     }
+  }
+
+  generatePawnMovings(startSquareId, piece) {
+    this.moves = [];
+    let startSquare = parseInt(startSquareId.slice(2));
+    let possiblesMoves = this.isStartPosition(startSquare, piece) ? 2 : 1;
+    let increment = piece.color == 'b' ? 8 : -8;
+    let targetSquare = startSquare;
+    for (let index = 0; index < possiblesMoves; index++) {
+      targetSquare = targetSquare + increment;
+      console.log('targetSquare: targetSquare', startSquare, targetSquare);
+      let move: Move = {
+        startSquare: startSquare,
+        targetSquare: targetSquare
+      }
+      this.moves.push(move);
+    }
+    this.drawMoves(this.moves)
+  }
+
+  isStartPosition(square, piece) {
+    if (piece.color == 'b' && square > 8 && square < 17) {
+      return true;
+    } else if (piece.color == 'w' && square > 48 && square < 57) {
+      return true;
+    }
+    return false;
   }
 
 
@@ -87,16 +118,21 @@ export class MoveService {
         }
       }
     }
-    for (let i = 0; i < this.moves.length; i++) {
-      let targetSquareId = 'sq' + this.moves[i].targetSquare;
+    this.drawMoves(this.moves)
+  }
+
+  drawMoves(moves) {
+    for (let i = 0; i < moves.length; i++) {
+      let targetSquareId = 'sq' + moves[i].targetSquare;
       let square = document.getElementById(targetSquareId);
-      if (this.moves[i].type == 'possibleCapture') {
+      if (moves[i].type == 'possibleCapture') {
         square.classList.add('possibleCapture');
       } else {
         square.classList.add('possibleMove');
       }
       square.addEventListener("dragover", this.allowDrop);
     }
+
   }
 
 
