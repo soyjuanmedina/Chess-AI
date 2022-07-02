@@ -17,12 +17,16 @@ export class ResourcesService {
   }
 
   isSlidingPiece(piece: Piece) {
-    return true;
+    if (piece.type == 'q' || piece.type == 'r' || piece.type == 'b') {
+      return true;
+    }
+    return false;
   }
+
 
   cleanClasses() {
     var section = document.querySelector('#board');
     section.querySelectorAll(".square").forEach(e =>
-      e.classList.remove("posibleMove", "posibleCapture"));
+      e.classList.remove("possibleMove", "possibleCapture"));
   }
 }

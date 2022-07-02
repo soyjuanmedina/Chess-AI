@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
             type: symbol.toLowerCase(),
             color: color
           };
-          this.drawPiece(piece, square);
+          this._moveService.drawPiece(piece, square);
           square++;
         }
       }
@@ -88,17 +88,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  drawPiece(piece: Piece, square) {
-    // let position = String.fromCharCode(97 + x) + (y + 1);
-    let innerDiv = document.getElementById('sq' + square);
-    let img: HTMLImageElement = document.createElement("img");
-    img.src = 'assets/pieces/' + piece.color + piece.type + '.png';
-    img.classList.add('square');
-    img.setAttribute("id", piece.color + piece.type + square);
-    img.setAttribute("draggable", "true");
-    img.addEventListener('dragstart', this._moveService.drag.bind(this._moveService));
-    innerDiv.appendChild(img);
-  }
+
 
   ngOnInit() {
     this.drawBoard();

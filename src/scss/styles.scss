@@ -16,12 +16,12 @@ $squareSize: var(--squareSize);
   height: 50px;
 }
 
-.posibleMove {
+.possibleMove {
   border: 2px solid #000;
   border-radius: 30%;
 }
 
-.posibleCapture {
+.possibleCapture {
   // border: 2px solid red;
   opacity: 0.6;
 }
