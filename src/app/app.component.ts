@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Piece } from './interfaces/piece.interface';
 import { ConfigurationService } from './services/configuration.service';
 import { MoveService } from './services/move.service';
 
@@ -45,8 +46,11 @@ export class AppComponent implements OnInit {
           if (symbol == symbol.toLowerCase()) {
             color = 'b';
           }
-          let piece = symbol.toLowerCase();
-          this.drawPiece(color, piece, square);
+          let piece: Piece = {
+            type: symbol.toLowerCase(),
+            color: color
+          };
+          this.drawPiece(piece, square);
           square++;
         }
       }
@@ -85,13 +89,13 @@ export class AppComponent implements OnInit {
     }
   }
 
-  drawPiece(color, piece, square) {
+  drawPiece(piece: Piece, square) {
     // let position = String.fromCharCode(97 + x) + (y + 1);
     let innerDiv = document.getElementById('sq' + square);
     let img: HTMLImageElement = document.createElement("img");
-    img.src = 'assets/pieces/' + color + piece + '.png';
+    img.src = 'assets/pieces/' + piece.color + piece.type + '.png';
     img.classList.add('square');
-    img.setAttribute("id", color + piece + square);
+    img.setAttribute("id", piece.color + piece.type + square);
     img.setAttribute("draggable", "true");
     img.addEventListener('dragstart', this.drag.bind(this));
     innerDiv.appendChild(img);
@@ -129,9 +133,10 @@ export class AppComponent implements OnInit {
   drag(ev) {
     let pieceId = ev.target.id;
     let pieceSrc = ev.target.src;
-    let squareId =  ev.target.parentNode.id;
+    let squareId = ev.target.parentNode.id;
     ev.dataTransfer.setData("pieceId", pieceId);
     ev.dataTransfer.setData("pieceSrc", pieceSrc);
+    let piece = this._moveService.getPiece(pieceId);
     this._moveService.generateSlideMovings(squareId, pieceId);
     /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
         audio.play(); */
@@ -144,11 +149,16 @@ export class AppComponent implements OnInit {
     if (ev.target.getAttribute('src')) {
       ev.target.setAttribute('src', pieceSrc);
     }
-    ev.target.appendChild(document.getElementById(pieceId));
+    console.log(ev.target.id, pieceId, pieceSrc);
+
+    if (ev.target.id != pieceId) {
+      ev.target.appendChild(document.getElementById(pieceId));
+    }
     /*     let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
         audio.play(); */
-    ev.target.parentElement.parentElement.querySelectorAll( ".square" ).forEach( e =>
-      e.classList.remove( "posibleMove" ) );
+    var section = document.querySelector('#board');
+    section.querySelectorAll(".square").forEach(e =>
+      e.classList.remove("posibleMove", "posibleCapture"));
   }
 
 }
