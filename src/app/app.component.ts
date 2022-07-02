@@ -12,7 +12,6 @@ import { MoveService } from './services/move.service';
 
 export class AppComponent implements OnInit {
   title = 'Ajedrez';
-  startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   squareSize: number = 75;
   isConfiguring: boolean = false;
   editItem: string = null;
@@ -69,8 +68,8 @@ export class AppComponent implements OnInit {
         row.appendChild(square);
         square.setAttribute("id", 'sq' + i);
         square.classList.add('square');
-        square.addEventListener("dragover", this.allowDrop);
-        square.addEventListener("drop", this.drop.bind(this));
+        square.addEventListener("dragover", this._moveService.allowDrop.bind(this._moveService));
+        square.addEventListener("drop", this._moveService.drop.bind(this._moveService));
         if (x % 2 == 0) {
           if (y % 2 == 0) {
             square.classList.add('ligth');
@@ -97,13 +96,13 @@ export class AppComponent implements OnInit {
     img.classList.add('square');
     img.setAttribute("id", piece.color + piece.type + square);
     img.setAttribute("draggable", "true");
-    img.addEventListener('dragstart', this.drag.bind(this));
+    img.addEventListener('dragstart', this._moveService.drag.bind(this._moveService));
     innerDiv.appendChild(img);
   }
 
   ngOnInit() {
     this.drawBoard();
-    this.loadPositionFromFem(this.startFEN);
+    this.loadPositionFromFem(this._moveService.FEN);
   }
 
   // Funciones edición de la configuración
@@ -124,41 +123,5 @@ export class AppComponent implements OnInit {
     this.cancelEdit();
   }
 
-  // Funciones Drag & Drop
-
-  allowDrop(ev) {
-    ev.preventDefault();
-  }
-
-  drag(ev) {
-    let pieceId = ev.target.id;
-    let pieceSrc = ev.target.src;
-    let squareId = ev.target.parentNode.id;
-    ev.dataTransfer.setData("pieceId", pieceId);
-    ev.dataTransfer.setData("pieceSrc", pieceSrc);
-    let piece = this._moveService.getPiece(pieceId);
-    this._moveService.generateSlideMovings(squareId, pieceId);
-    /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
-        audio.play(); */
-  }
-
-  drop(ev) {
-    ev.preventDefault();
-    let pieceId = ev.dataTransfer.getData("pieceId");
-    let pieceSrc = ev.dataTransfer.getData("pieceSrc");
-    if (ev.target.getAttribute('src')) {
-      ev.target.setAttribute('src', pieceSrc);
-    }
-    console.log(ev.target.id, pieceId, pieceSrc);
-
-    if (ev.target.id != pieceId) {
-      ev.target.appendChild(document.getElementById(pieceId));
-    }
-    /*     let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
-        audio.play(); */
-    var section = document.querySelector('#board');
-    section.querySelectorAll(".square").forEach(e =>
-      e.classList.remove("posibleMove", "posibleCapture"));
-  }
 
 }

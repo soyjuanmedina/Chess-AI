@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Move } from "../interfaces/move.interface";
 import { Piece } from '../interfaces/piece.interface';
+import { ResourcesService } from './resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,10 +11,10 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   moves: Array<Move>;
+  FEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-  constructor() {
+  constructor(public _resourcesService: ResourcesService) {
     this.preComputedMoveData();
-    // this.generateSlideMovings(35, 'piece')
   }
 
   preComputedMoveData() {
@@ -46,25 +47,25 @@ export class MoveService {
     // console.log('this.numSquaresToEdge', this.numSquaresToEdge[54]);
   }
 
-  generateMoves() {
-
+  generateMoves(startSquareId, pieceId) {
+    let piece = this._resourcesService.getPiece(pieceId);
+    let colorToMove = this.FEN.split(' ')[1];
+    if (colorToMove == piece.color && this._resourcesService.isSlidingPiece(piece)) {
+      this.generateSlideMovings(startSquareId, piece);
+    }
   }
 
-  getPiece(pieceId: string) {
-    let piece: Piece = {
-      type: pieceId.charAt(1),
-      color: pieceId.charAt(0)
-    };
-    return piece;
-  }
 
-  generateSlideMovings(startSquareId, pieceId) {
-    let piece = this.getPiece(pieceId);
+
+  generateSlideMovings(startSquareId, piece) {
+    console.log(piece.type);
+    let startIndex = piece.type == 'b' ? 4 : 0;
+    let endIndex = piece.type == 'r' ? 4 : 8;
     let startSquare = parseInt(startSquareId.slice(2));
     this.moves = [];
     // let square = document.getElementById(startSquare);
     // square.classList.add('mark');
-    for (let directionIndex = 0; directionIndex < 8; directionIndex++) {
+    for (let directionIndex = startIndex; directionIndex < endIndex; directionIndex++) {
       for (let n = 0; n < this.numSquaresToEdge[startSquare][directionIndex]; n++) {
         let targetSquare = startSquare + this.directionOffsets[directionIndex] * (n + 1);
         let targetSquareId = 'sq' + targetSquare;
@@ -77,7 +78,7 @@ export class MoveService {
           this.moves.push(move);
         } else {
           let pieceId = square.getElementsByTagName('img')[0].id;
-          let targetPiece = this.getPiece(pieceId);
+          let targetPiece = this._resourcesService.getPiece(pieceId);
           if (piece.color != targetPiece.color) {
             move.type = 'posibleCapture';
             this.moves.push(move);
@@ -87,7 +88,6 @@ export class MoveService {
       }
     }
     for (let i = 0; i < this.moves.length; i++) {
-      console.log('this.moves[i]', this.moves[i].type);
       let targetSquareId = 'sq' + this.moves[i].targetSquare;
       let square = document.getElementById(targetSquareId);
       if (this.moves[i].type == 'posibleCapture') {
@@ -97,23 +97,44 @@ export class MoveService {
       }
       square.addEventListener("dragover", this.allowDrop);
     }
-    /* this.moves.forEach(move => {
-      let targetSquareId = 'sq' + move.targetSquare;
-      let square = document.getElementById(targetSquareId);
-      if (square.hasChildNodes()) {
-        let pieceId = square.getElementsByTagName('img')[0].id;
-        let targetPiece = this.getPiece(pieceId);
-        if (piece.color != targetPiece.color) {
-          square.classList.add('posibleCapture');
-        }
-      } else {
-        square.classList.add('posibleMove');
-      }
-    }); */
-
   }
+
+
+  // Funciones Drag & Drop
 
   allowDrop(ev) {
     ev.preventDefault();
   }
+
+  drag(ev) {
+    let pieceId = ev.target.id;
+    let pieceSrc = ev.target.src;
+    let squareId = ev.target.parentNode.id;
+    ev.dataTransfer.setData("pieceId", pieceId);
+    ev.dataTransfer.setData("pieceSrc", pieceSrc);
+    this.generateMoves(squareId, pieceId);
+    /*     let audio = new Audio('assets/sounds/dragslide1.mp3');
+        audio.play(); */
+  }
+
+  drop(ev) {
+    if (ev.target.getAttribute('class').includes('posibleMove')) {
+      ev.preventDefault();
+      let pieceId = ev.dataTransfer.getData("pieceId");
+      let pieceSrc = ev.dataTransfer.getData("pieceSrc");
+      if (ev.target.getAttribute('src')) {
+        ev.target.setAttribute('src', pieceSrc);
+      }
+      if (ev.target.id != pieceId) {
+        ev.target.appendChild(document.getElementById(pieceId));
+      }
+      /*     let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
+          audio.play(); */
+
+    }
+    this._resourcesService.cleanClasses();
+
+
+  }
+
 }
