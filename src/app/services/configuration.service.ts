@@ -12,7 +12,7 @@ export class ConfigurationService {
   configuration = {
     ligthColor: '#fdb958',
     darkColor: '#061374',
-    squareSize: 50
+    squareSize: 50,
   };
 
   private themeWrapper = document.querySelector('body');

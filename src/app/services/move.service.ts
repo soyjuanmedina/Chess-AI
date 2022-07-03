@@ -11,7 +11,7 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   moves: Array<Move>;
-  FEN: string = '8/2p5/5r2/8/2Q5/5N2/3P4/8 w KQkq - 0 1';
+  FEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   colorToMove = 'w'
 
   constructor(public _resourcesService: ResourcesService) {
@@ -55,30 +55,69 @@ export class MoveService {
         this.generateSlideMovings(startSquareId, piece);
       } else if (piece.type == 'p') {
         this.generatePawnMovings(startSquareId, piece);
+      } else if (piece.type == 'n') {
+        this.generateKnightMovings(startSquareId, piece);
       }
-
     }
+  }
+
+  generateKnightMovings(startSquareId, piece) {
+    this.moves = [];
+    let possibleKnightMoves: Array<number> = [-17, -10, -15, -6, 6, 10, 15, 17];
+    let startSquare = parseInt(startSquareId.slice(2));
+    for (let index = 0; index < possibleKnightMoves.length; index++) {
+      let targetSquare = startSquare + possibleKnightMoves[index]
+      if (targetSquare > 0 && targetSquare < 65) {
+        let move: Move = {
+          startSquare: startSquare,
+          targetSquare: targetSquare
+        }
+        console.log('move', move);
+        this.moves.push(move);
+      }
+    }
+    this.drawMoves(this.moves)
   }
 
   generatePawnMovings(startSquareId, piece) {
     this.moves = [];
     let startSquare = parseInt(startSquareId.slice(2));
-    let possiblesMoves = this.isStartPosition(startSquare, piece) ? 2 : 1;
+    let possiblesMoves = this.isPawnStartPosition(startSquare, piece) ? 2 : 1;
     let increment = piece.color == 'b' ? 8 : -8;
-    let targetSquare = startSquare;
-    for (let index = 0; index < possiblesMoves; index++) {
-      targetSquare = targetSquare + increment;
-      console.log('targetSquare: targetSquare', startSquare, targetSquare);
+    let targetSquare = startSquare + increment - 1;
+    for (let index = 0; index < 3; index++) {
+      if (index == 1) {
+        if (this._resourcesService.squareHasPiece(targetSquare + index)) {
+          index++;
+        } else {
+          let move: Move = {
+            startSquare: startSquare,
+            targetSquare: targetSquare + index
+          }
+          this.moves.push(move);
+        }
+
+      } else {
+        if (this._resourcesService.squareHasPiece(targetSquare + index)) {
+          let move: Move = {
+            startSquare: startSquare,
+            targetSquare: targetSquare + index
+          }
+          this.moves.push(move);
+        }
+      }
+    }
+    if (possiblesMoves == 2) {
       let move: Move = {
         startSquare: startSquare,
-        targetSquare: targetSquare
+        targetSquare: startSquare + increment * 2
       }
       this.moves.push(move);
     }
     this.drawMoves(this.moves)
   }
 
-  isStartPosition(square, piece) {
+  isPawnStartPosition(square, piece) {
     if (piece.color == 'b' && square > 8 && square < 17) {
       return true;
     } else if (piece.color == 'w' && square > 48 && square < 57) {
@@ -105,32 +144,59 @@ export class MoveService {
           startSquare: startSquare,
           targetSquare: targetSquare
         }
-        if (!square.hasChildNodes()) {
-          this.moves.push(move);
-        } else {
-          let pieceId = square.getElementsByTagName('img')[0].id;
-          let targetPiece = this._resourcesService.getPiece(pieceId);
-          if (piece.color != targetPiece.color) {
-            move.type = 'possibleCapture';
-            this.moves.push(move);
-          }
+        if (square.hasChildNodes()) {
           n = this.numSquaresToEdge[startSquare][directionIndex];
         }
+        this.moves.push(move);
       }
     }
     this.drawMoves(this.moves)
   }
 
+  isPossibleCapture(startSquareNum, targetSquareNum) {
+    let targetSquareId = 'sq' + targetSquareNum;
+    let targetSquare = document.getElementById(targetSquareId);
+    if (!targetSquare.hasChildNodes()) {
+      return false
+    } else {
+      let startSquareId = 'sq' + startSquareNum;
+      let startSquare = document.getElementById(startSquareId);
+      let startPieceId = startSquare.getElementsByTagName('img')[0].id;
+      let startPiece = this._resourcesService.getPiece(startPieceId);
+      let targetPieceId = targetSquare.getElementsByTagName('img')[0].id;
+      let targetPiece = this._resourcesService.getPiece(targetPieceId);
+      if (startPiece.color != targetPiece.color) {
+        return true
+      }
+      return false
+    }
+  }
+
+  isFriendPiece(startSquareNum, targetSquare) {
+    let startSquareId = 'sq' + startSquareNum;
+    let startSquare = document.getElementById(startSquareId);
+    let startPieceId = startSquare.getElementsByTagName('img')[0].id;
+    let startPiece = this._resourcesService.getPiece(startPieceId);
+    let targetPieceId = targetSquare.getElementsByTagName('img')[0].id;
+    let targetPiece = this._resourcesService.getPiece(targetPieceId);
+    if (startPiece.color == targetPiece.color) {
+      return true
+    }
+    return false;
+  }
+
   drawMoves(moves) {
     for (let i = 0; i < moves.length; i++) {
       let targetSquareId = 'sq' + moves[i].targetSquare;
-      let square = document.getElementById(targetSquareId);
-      if (moves[i].type == 'possibleCapture') {
-        square.classList.add('possibleCapture');
+      let targetSquare = document.getElementById(targetSquareId);
+      if (targetSquare.hasChildNodes()) {
+        if (!this.isFriendPiece(moves[i].startSquare, targetSquare)) {
+          targetSquare.classList.add('possibleCapture');
+        }
       } else {
-        square.classList.add('possibleMove');
+        targetSquare.classList.add('possibleMove');
       }
-      square.addEventListener("dragover", this.allowDrop);
+      targetSquare.addEventListener("dragover", this.allowDrop);
     }
 
   }

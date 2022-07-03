@@ -3,6 +3,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { Piece } from './interfaces/piece.interface';
 import { ConfigurationService } from './services/configuration.service';
 import { MoveService } from './services/move.service';
+import { ResourcesService } from './services/resources.service';
 
 @Component({
   selector: 'app-root',
@@ -18,13 +19,16 @@ export class AppComponent implements OnInit {
 
   boardConfiguration: FormGroup;
 
-  constructor(public _configurationService: ConfigurationService, public _moveService: MoveService) {
+  constructor(public _configurationService: ConfigurationService, public _moveService: MoveService,
+    public _resourcesService: ResourcesService) {
     this.boardConfiguration = new FormGroup({
       ligthColor: new FormControl(),
       darkColor: new FormControl(),
-      squareSize: new FormControl()
+      squareSize: new FormControl(),
+      fenPosition: new FormControl()
     })
     this.boardConfiguration.disable();
+    this.boardConfiguration.controls['fenPosition'].enable();
   }
 
   setConfiguring() {
@@ -113,5 +117,9 @@ export class AppComponent implements OnInit {
     this.cancelEdit();
   }
 
+  loadFromFemPosition() {
+    this._resourcesService.clearBoard()
+    this.loadPositionFromFem(this.boardConfiguration.controls['fenPosition'].value);
+  }
 
 }

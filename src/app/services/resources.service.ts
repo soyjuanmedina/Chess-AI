@@ -23,10 +23,23 @@ export class ResourcesService {
     return false;
   }
 
-
   cleanClasses() {
     var section = document.querySelector('#board');
     section.querySelectorAll(".square").forEach(e =>
       e.classList.remove("possibleMove", "possibleCapture"));
   }
+
+  clearBoard() {
+    for (var i = document.images.length; i-- > 0;)
+      document.images[i].parentNode.removeChild(document.images[i]);
+  }
+
+  squareHasPiece(square: number) {
+    let innerDiv = document.getElementById('sq' + square);
+    if (innerDiv.hasChildNodes()) {
+      return true;
+    }
+    return false;
+  }
+
 }
