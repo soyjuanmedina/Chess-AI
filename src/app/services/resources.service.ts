@@ -11,7 +11,8 @@ export class ResourcesService {
   getPiece(pieceId: string) {
     let piece: Piece = {
       type: pieceId.charAt(1),
-      color: pieceId.charAt(0)
+      color: pieceId.charAt(0),
+      position: parseInt(pieceId.slice(2))
     };
     return piece;
   }
@@ -40,6 +41,12 @@ export class ResourcesService {
       return true;
     }
     return false;
+  }
+
+  delay(milliseconds) {
+    return new Promise(resolve => {
+      setTimeout(resolve, milliseconds);
+    });
   }
 
 }

@@ -1,18 +1,12 @@
-import { Inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
-
-// Interfaces
-
-import { DOCUMENT } from '@angular/common';
+import { Injectable } from '@angular/core';
 
 @Injectable()
 export class ConfigurationService {
 
   configuration = {
-    ligthColor: '#fdb958',
+    ligthColor: '#B58863',
     darkColor: '#061374',
-    squareSize: 50,
+    squareSize: 50
   };
 
   private themeWrapper = document.querySelector('body');

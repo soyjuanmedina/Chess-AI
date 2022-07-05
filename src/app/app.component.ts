@@ -25,10 +25,12 @@ export class AppComponent implements OnInit {
       ligthColor: new FormControl(),
       darkColor: new FormControl(),
       squareSize: new FormControl(),
-      fenPosition: new FormControl()
+      fenPosition: new FormControl(),
+      computerPlayBlack: new FormControl()
     })
     this.boardConfiguration.disable();
     this.boardConfiguration.controls['fenPosition'].enable();
+    this.boardConfiguration.controls['computerPlayBlack'].enable();
   }
 
   setConfiguring() {
@@ -36,6 +38,7 @@ export class AppComponent implements OnInit {
   }
 
   loadPositionFromFem(fen: string) {
+
     let fenBoard: string = fen.split(' ')[0];
     let square: number = 1;
     [...fenBoard].forEach(symbol => {
@@ -49,9 +52,11 @@ export class AppComponent implements OnInit {
           if (symbol == symbol.toLowerCase()) {
             color = 'b';
           }
+
           let piece: Piece = {
             type: symbol.toLowerCase(),
-            color: color
+            color: color,
+            position: square
           };
           this._moveService.drawPiece(piece, square);
           square++;

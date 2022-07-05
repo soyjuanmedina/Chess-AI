@@ -26,6 +26,11 @@ $squareSize: var(--squareSize);
   opacity: 0.6;
 }
 
+.check {
+  border: 2px solid red;
+  border-radius: 30%;
+}
+
 .row {
   display: flex;
 }
