@@ -36,6 +36,9 @@ export class ResourcesService {
   }
 
   squareHasPiece(square: number) {
+    if (square < 1 || square > 64) {
+      return false
+    }
     let innerDiv = document.getElementById('sq' + square);
     if (innerDiv.hasChildNodes()) {
       return true;
