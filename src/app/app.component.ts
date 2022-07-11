@@ -37,8 +37,14 @@ export class AppComponent implements OnInit {
     this.isConfiguring = !this.isConfiguring;
   }
 
-  loadPositionFromFem(fen: string) {
+  playAgain() {
+    this._moveService.isCheckPosition = false;
+    this._moveService.isCheckmate = false;
+    this.loadPositionFromFem(this._moveService.startFEN);
+  }
 
+  loadPositionFromFem(fen: string) {
+    this._resourcesService.clearBoard()
     let fenBoard: string = fen.split(' ')[0];
     let square: number = 1;
     [...fenBoard].forEach(symbol => {
@@ -123,7 +129,6 @@ export class AppComponent implements OnInit {
   }
 
   loadFromFemPosition() {
-    this._resourcesService.clearBoard()
     this.loadPositionFromFem(this.boardConfiguration.controls['fenPosition'].value);
   }
 

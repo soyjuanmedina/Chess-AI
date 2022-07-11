@@ -11,11 +11,13 @@ export class MoveService {
 
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
-  // FEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  FEN: string = '8/8/8/3K4/1k6/8/8/8 w KQkq - 0 1';
+  startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  // FEN: string = this.startFEN;
+  FEN: string = 'rnbqkbnr/ppppp1pp/5P2/8/8/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1';
   colorToMove = 'w';
-  computerPlayBlack: boolean = false;
+  computerPlayBlack: boolean = true;
   isCheckPosition = false;
+  isCheckmate = false;
 
   constructor(public _resourcesService: ResourcesService) {
     this.preComputedMoveData();
@@ -89,10 +91,21 @@ export class MoveService {
   }
 
   itsSquareUnderThret(targetSquareNum: number, attackColor: string) {
+
     if (this.itsAttackKingNear(targetSquareNum, attackColor)) {
       return true
     }
+    // Borramos el rey para que no afecte a las casillas amenazadas tras él 
+    let kingColor = attackColor == 'w' ? 'b' : 'w';
+    let kingSrc = "assets/pieces/" + kingColor + "k.png"
+    let kingPlace: any = document.querySelectorAll('img[src="' + kingSrc + '"]');
+    let kingId = kingPlace[0].id;
+    let kingDiv = kingPlace[0].parentNode;
+    let kingNode = document.getElementById(kingId)
+    document.getElementById(kingId).remove();
     let possiblesAttacks = this.getAllPossiblesMovesExceptKing(attackColor);
+    kingDiv.appendChild(kingNode);
+
     let attacks = possiblesAttacks.filter(possibleAttack => possibleAttack.targetSquare == targetSquareNum);
     if (attacks.length > 0) {
       return true
@@ -105,7 +118,7 @@ export class MoveService {
       let newtargetSquareNum = targetSquareNum + this.directionOffsets[index];
       let newTargetSquareId = 'sq' + newtargetSquareNum;
       let newTargetSquareDiv = document.getElementById(newTargetSquareId);
-      if (newTargetSquareDiv.hasChildNodes()) {
+      if (newTargetSquareDiv && newTargetSquareDiv.hasChildNodes()) {
         let pieceId = newTargetSquareDiv.getElementsByTagName('img')[0].id;
         let piece = this._resourcesService.getPiece(pieceId);
         if (piece.color == attackColor) {
@@ -194,7 +207,9 @@ export class MoveService {
           }
         }
       } else {
-        if (this._resourcesService.squareHasPiece(targetSquare + index) && !this.isFriendPiece(startSquare, targetSquare + index)) {
+        if (this._resourcesService.squareHasPiece(targetSquare + index) &&
+          !this.isFriendPiece(startSquare, targetSquare + index)) {
+
           let move: Move = {
             startSquare: startSquare,
             targetSquare: targetSquare + index
@@ -203,7 +218,7 @@ export class MoveService {
         }
       }
     }
-    if (possiblesMoves == 2) {
+    if (possiblesMoves == 2 && !this._resourcesService.squareHasPiece(startSquare + increment)) {
       let move: Move = {
         startSquare: startSquare,
         targetSquare: startSquare + increment * 2
@@ -239,11 +254,13 @@ export class MoveService {
         let targetSquareDiv = document.getElementById(targetSquareId);
         if (targetSquareDiv.hasChildNodes()) {
           n = this.numSquaresToEdge[startSquare][directionIndex];
-          let move: Move = {
-            startSquare: startSquare,
-            targetSquare: targetSquare
+          if (!this.isFriendPiece(startSquare, targetSquare)) {
+            let move: Move = {
+              startSquare: startSquare,
+              targetSquare: targetSquare
+            }
+            moves.push(move);
           }
-          moves.push(move);
         } else {
           let move: Move = {
             startSquare: startSquare,
@@ -291,9 +308,8 @@ export class MoveService {
     return false;
   }
 
-  drawMoves(moves) {
+  removeFriendsMoves(moves) {
     let finalMoves: Array<Move> = [];
-    // Eliminamos de las casillas con piezas amigas
     for (let index = 0; index < moves.length; index++) {
       let targetSquare = moves[index].targetSquare;
       let targetSquareId = 'sq' + moves[index].targetSquare;
@@ -303,8 +319,14 @@ export class MoveService {
         let move: Move = this.getMove(moves[index].startSquare, moves[index].targetSquare);
         finalMoves.push(move);
       }
-
     }
+    return finalMoves;
+
+  }
+
+  drawMoves(moves) {
+    // Eliminamos de las casillas con piezas amigas
+    let finalMoves: Array<Move> = this.removeFriendsMoves(moves);
     // Ponemos las clasess de posible movimiento y posible captura
     for (let i = 0; i < finalMoves.length; i++) {
       let targetSquareId = 'sq' + finalMoves[i].targetSquare;
@@ -321,16 +343,27 @@ export class MoveService {
 
   }
 
+  avoidCheck(move) {
+    console.log('move', move);
+  }
+
   // Funciones Drag & Drop
 
   allowDrop(ev) {
     ev.preventDefault();
   }
 
-  drag(ev) {
-    if (this.isCheckPosition) {
-      console.log('Estas en jaque');
+  checkIfMate(squareId, pieceId) {
+    let moves: Array<Move> = this.generateMoves(squareId, pieceId);
+    if (!moves.length) {
+      console.log('es mate', moves);
+      this.isCheckmate = true
+    } else {
+      return moves
     }
+  }
+
+  drag(ev) {
     let pieceId = ev.target.id;
     let squareId = ev.target.parentNode.id;
     ev.dataTransfer.setData("pieceId", pieceId);
@@ -349,7 +382,7 @@ export class MoveService {
       let square = ev.target.getAttribute('id').slice(2);
       this.drawPiece(piece, square);
     }
-    this._resourcesService.cleanClasses();
+    this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
   }
 
   isPossibleMove(node) {
@@ -361,6 +394,7 @@ export class MoveService {
   }
 
   drawPiece(piece: Piece, square: number,) {
+    console.log('drawPiece', piece, square);
     let pieceId = piece.color + piece.type + piece.position;
     if (document.getElementById(pieceId)) {
       document.getElementById(pieceId).remove();
@@ -369,7 +403,7 @@ export class MoveService {
       this.checkCheck(piece.color);
       let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
       audio.play();
-      this._resourcesService.cleanClasses();
+      this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
       if (this.colorToMove == 'b' && this.computerPlayBlack) {
         this.doNextMove();
       }
@@ -395,7 +429,18 @@ export class MoveService {
 
 
   doNextMove() {
-    this.choosePiece();
+    if (this.isCheckPosition) {
+      let kingNode = document.getElementsByClassName('check')[0];
+      let kingImg = kingNode.getElementsByTagName('img')[0];
+      let kingPiece: Piece = this._resourcesService.getPiece(kingImg.id);
+      let possibleMoves = this.checkIfMate(kingNode.id, kingImg.id);
+      let index = Math.floor(Math.random() * possibleMoves.length);
+      let randomMove = possibleMoves[index];
+      this.drawPiece(kingPiece, randomMove.targetSquare);
+      console.log('isCheckPosition', possibleMoves);
+    } else {
+      this.choosePiece();
+    }
   }
 
   choosePiece() {
@@ -437,6 +482,7 @@ export class MoveService {
   }
 
   checkCheck(color: string) {
+    this._resourcesService.cleanClasses(['check'])
     let allPossiblesMoves = this.getAllPossiblesMovesExceptKing(color);
     for (let index = 0; index < allPossiblesMoves.length; index++) {
       let targetSquare = document.getElementById('sq' + allPossiblesMoves[index].targetSquare);
@@ -446,9 +492,9 @@ export class MoveService {
         if (piece.type == 'k' && piece.color != color) {
           targetSquare.classList.add('check');
           this.isCheckPosition = true;
+          this.checkIfMate(targetSquare.id, pieceId);
         }
       }
-
     }
   }
 

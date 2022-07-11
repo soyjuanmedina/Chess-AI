@@ -24,10 +24,13 @@ export class ResourcesService {
     return false;
   }
 
-  cleanClasses() {
+  cleanClasses(classes: Array<string>) {
     var section = document.querySelector('#board');
-    section.querySelectorAll(".square").forEach(e =>
-      e.classList.remove("possibleMove", "possibleCapture"));
+    section.querySelectorAll(".square").forEach(e => {
+      classes.forEach(oneClass => {
+        e.classList.remove(oneClass)
+      });
+    });
   }
 
   clearBoard() {
