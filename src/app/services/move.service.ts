@@ -12,16 +12,17 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  // FEN: string = this.startFEN;
-  FEN: string = 'rnbqkbnr/ppppp1pp/5P2/8/8/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1';
+  FEN: string = this.startFEN;
+  // FEN: string = 'rnbq1bnr/ppppk1pp/5P2/8/8/8/PPPPP1PP/RNBQKBNR b KQkq - 0 1';
   colorToMove = 'w';
   computerPlayBlack: boolean = true;
   isCheckPosition = false;
   isCheckmate = false;
+  isPlaying = false;
+  checkThreatSquare: number;
 
   constructor(public _resourcesService: ResourcesService) {
     this.preComputedMoveData();
-    this.colorToMove = this.FEN.split(' ')[1];
   }
 
   generateMoves(startSquareId, pieceId) {
@@ -77,7 +78,6 @@ export class MoveService {
         let targetSquareId = 'sq' + targetSquareNum;
         let targetSquareDiv = document.getElementById(targetSquareId);
         if (targetSquareDiv.hasChildNodes() && this.isFriendPiece(startSquareNum, targetSquareNum)) {
-          index++;
         } else {
           let attackColor = piece.color == 'w' ? 'b' : 'w';
           if (!this.itsSquareUnderThret(targetSquareNum, attackColor)) {
@@ -91,7 +91,6 @@ export class MoveService {
   }
 
   itsSquareUnderThret(targetSquareNum: number, attackColor: string) {
-
     if (this.itsAttackKingNear(targetSquareNum, attackColor)) {
       return true
     }
@@ -105,7 +104,6 @@ export class MoveService {
     document.getElementById(kingId).remove();
     let possiblesAttacks = this.getAllPossiblesMovesExceptKing(attackColor);
     kingDiv.appendChild(kingNode);
-
     let attacks = possiblesAttacks.filter(possibleAttack => possibleAttack.targetSquare == targetSquareNum);
     if (attacks.length > 0) {
       return true
@@ -151,6 +149,11 @@ export class MoveService {
     for (let index = 0; index < possibleKnightMoves.length; index++) {
       let targetSquareNum = startSquareNum + possibleKnightMoves[index]
       let move: Move = this.getMove(startSquareNum, targetSquareNum);
+      let targetSquareId = 'sq' + targetSquareNum;
+      let targetSquareDiv = document.getElementById(targetSquareId);
+      if (targetSquareDiv && targetSquareDiv.hasChildNodes() && this.isFriendPiece(startSquareNum, targetSquareNum)) {
+        move.targetSquare = 65;
+      }
       moves.push(move);
     }
     if (startSquareNum % 8 == 0) {
@@ -227,6 +230,26 @@ export class MoveService {
     }
 
     return moves;
+  }
+
+  generatePawnThreats(startSquareId, piece) {
+    let threats: Array<Move> = [];
+    let startSquare = parseInt(startSquareId.slice(2));
+    let startIndex = this.numSquaresToEdge[startSquare][2] == 0 ? 1 : 0;
+    let endIndex = this.numSquaresToEdge[startSquare][3] == 0 ? 2 : 3;
+    let possiblesMoves = this.isPawnStartPosition(startSquare, piece) ? 2 : 1;
+    let increment = piece.color == 'b' ? 8 : -8;
+    let targetSquare = startSquare + increment - 1;
+    for (let index = startIndex; index < endIndex; index++) {
+      if (index == 0 || index == 2) {
+        let move: Move = {
+          startSquare: startSquare,
+          targetSquare: targetSquare + index
+        }
+        threats.push(move);
+      }
+    }
+    return threats;
   }
 
   isPawnStartPosition(square, piece) {
@@ -370,6 +393,10 @@ export class MoveService {
     let moves: Array<Move> = this.generateMoves(squareId, pieceId);
     let piece: Piece = this._resourcesService.getPiece(pieceId);
     if ((this.colorToMove == piece.color)) {
+      if (this.isCheckPosition) {
+        moves = moves.filter(move => this.moveSolveCheck(move, piece))
+        console.log('filtermoves', moves);
+      }
       this.drawMoves(moves);
     }
   }
@@ -381,8 +408,18 @@ export class MoveService {
       let piece: Piece = this._resourcesService.getPiece(pieceId);
       let square = ev.target.getAttribute('id').slice(2);
       this.drawPiece(piece, square);
+      console.log('ev.target', ev.target);
+      setTimeout(() => {
+        if (this.colorToMove == 'b' && this.computerPlayBlack && this.isPlaying) {
+          this.doNextMove('b');
+        }
+      }
+        , 1000);
+
+
     }
     this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
+
   }
 
   isPossibleMove(node) {
@@ -394,19 +431,14 @@ export class MoveService {
   }
 
   drawPiece(piece: Piece, square: number,) {
-    console.log('drawPiece', piece, square);
+    this.colorToMove = piece.color == 'w' ? 'b' : 'w';
     let pieceId = piece.color + piece.type + piece.position;
     if (document.getElementById(pieceId)) {
       document.getElementById(pieceId).remove();
       this.drawPiece(piece, square);
-      this.colorToMove = this.colorToMove == 'w' ? 'b' : 'w';
-      this.checkCheck(piece.color);
       let audio = new Audio('assets/sounds/chess-move-on-alabaster.wav');
       audio.play();
       this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
-      if (this.colorToMove == 'b' && this.computerPlayBlack) {
-        this.doNextMove();
-      }
     }
     if (piece.type == 'p' && (square > 0 && square < 8) ||
       piece.type == 'p' && (square > 56 && square < 65)) {
@@ -423,30 +455,33 @@ export class MoveService {
     img.setAttribute("draggable", "true");
     img.addEventListener('dragstart', this.drag.bind(this));
     innerDiv.appendChild(img);
+    this.isCheckPosition = this.isCheck(piece.color);
   }
 
   // Funciones AI
 
 
-  doNextMove() {
+  doNextMove(color: string) {
+    console.log('doNextMove', color);
     if (this.isCheckPosition) {
       let kingNode = document.getElementsByClassName('check')[0];
-      let kingImg = kingNode.getElementsByTagName('img')[0];
-      let kingPiece: Piece = this._resourcesService.getPiece(kingImg.id);
-      let possibleMoves = this.checkIfMate(kingNode.id, kingImg.id);
-      let index = Math.floor(Math.random() * possibleMoves.length);
-      let randomMove = possibleMoves[index];
-      this.drawPiece(kingPiece, randomMove.targetSquare);
-      console.log('isCheckPosition', possibleMoves);
+      if (kingNode && kingNode.hasChildNodes()) {
+        let kingImg = kingNode.getElementsByTagName('img')[0];
+        let kingPiece: Piece = this._resourcesService.getPiece(kingImg.id);
+        let possibleMoves = this.checkIfMate(kingNode.id, kingImg.id);
+        let index = Math.floor(Math.random() * possibleMoves.length);
+        let randomMove = possibleMoves[index];
+        this.drawPiece(kingPiece, randomMove.targetSquare);
+      }
     } else {
-      this.choosePiece();
+      this.choosePiece(color);
     }
   }
 
-  choosePiece() {
+  choosePiece(color: string) {
     let randomSquare = Math.floor(Math.random() * 64) + 1
     let innerDiv = document.getElementById('sq' + randomSquare);
-    if (innerDiv.hasChildNodes() && innerDiv.getElementsByTagName('img')[0].id.charAt(0) == 'b') {
+    if (innerDiv.hasChildNodes() && innerDiv.getElementsByTagName('img')[0].id.charAt(0) == color) {
       let pieceId = innerDiv.getElementsByTagName('img')[0].id;
       let piece: Piece = this._resourcesService.getPiece(pieceId);
       let squareId = 'sq' + piece.position;
@@ -455,11 +490,13 @@ export class MoveService {
         let index = Math.floor(Math.random() * moves.length);
         let randomMove = moves[index];
         this.drawPiece(piece, randomMove.targetSquare);
+        let pieceInnerDiv = document.getElementById('sq' + randomMove.targetSquare);
+        pieceInnerDiv.classList.add('blink');
       } else {
-        this.choosePiece();
+        this.choosePiece(color);
       }
     } else {
-      this.choosePiece();
+      this.choosePiece(color);
     }
   }
 
@@ -471,7 +508,11 @@ export class MoveService {
       if (targetSquare.hasChildNodes() && targetSquare.getElementsByTagName('img')[0].id.charAt(0) == color) {
         let pieceId = targetSquare.getElementsByTagName('img')[0].id;
         let piece: Piece = this._resourcesService.getPiece(pieceId);
-        if (piece.type != 'k') {
+        if (piece.type == 'p') {
+          let squareId = 'sq' + piece.position;
+          let moves: Array<Move> = this.generatePawnThreats(squareId, pieceId);
+          allPossiblesMoves.push(...moves);
+        } else if (piece.type != 'k') {
           let squareId = 'sq' + piece.position;
           let moves: Array<Move> = this.generateMoves(squareId, pieceId);
           allPossiblesMoves.push(...moves);
@@ -481,9 +522,10 @@ export class MoveService {
     return allPossiblesMoves;
   }
 
-  checkCheck(color: string) {
+  isCheck(color: string) {
     this._resourcesService.cleanClasses(['check'])
     let allPossiblesMoves = this.getAllPossiblesMovesExceptKing(color);
+
     for (let index = 0; index < allPossiblesMoves.length; index++) {
       let targetSquare = document.getElementById('sq' + allPossiblesMoves[index].targetSquare);
       if (targetSquare.hasChildNodes()) {
@@ -491,11 +533,22 @@ export class MoveService {
         let piece: Piece = this._resourcesService.getPiece(pieceId);
         if (piece.type == 'k' && piece.color != color) {
           targetSquare.classList.add('check');
-          this.isCheckPosition = true;
+          this.checkThreatSquare = allPossiblesMoves[index].startSquare
           this.checkIfMate(targetSquare.id, pieceId);
+          return true;
         }
       }
     }
+    return false
+  }
+
+  moveSolveCheck(move: Move, piece: Piece) {
+    if (piece.type == 'k') {
+      return true;
+    } else if (move.targetSquare == this.checkThreatSquare) {
+      return true;
+    }
+    return false;
   }
 
 

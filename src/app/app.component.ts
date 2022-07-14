@@ -69,7 +69,11 @@ export class AppComponent implements OnInit {
         }
       }
     });
+    this._moveService.colorToMove = fen.split(' ')[1];
+    this._moveService.isPlaying = true;
   }
+
+
 
   drawBoard() {
     let i = 1
@@ -102,8 +106,6 @@ export class AppComponent implements OnInit {
       }
     }
   }
-
-
 
   ngOnInit() {
     this.drawBoard();

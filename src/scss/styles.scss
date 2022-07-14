@@ -11,6 +11,12 @@ $squareSize: var(--squareSize);
   justify-content: center;
 }
 
+.blink {
+  animation: blink 1s step-start 2;
+}
+
+
+
 .colorPicker {
   width: 100%;
   height: 50px;
@@ -33,4 +39,10 @@ $squareSize: var(--squareSize);
 
 .row {
   display: flex;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
 }
