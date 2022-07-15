@@ -13,7 +13,7 @@ export class MoveService {
   numSquaresToEdge = [[]];
   startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   // FEN: string = this.startFEN;
-  FEN: string = 'rnbqkbnr/pppppppp/3P4/8/8/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1';
+  FEN: string = 'rnbqkbnr/ppppp1pp/8/5p2/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1';
   colorToMove = 'w';
   computerPlayBlack: boolean = true;
   isCheckPosition = false;
@@ -80,7 +80,6 @@ export class MoveService {
         let targetSquareDiv = document.getElementById(targetSquareId);
         if (targetSquareDiv.hasChildNodes() && this.isFriendPiece(startSquareNum, targetSquareNum)) {
         } else {
-          console.log('targetSquareNum', targetSquareNum);
           let attackColor = piece.color == 'w' ? 'b' : 'w';
           if (!this.itsSquareUnderThret(targetSquareNum, attackColor)) {
             let move: Move = this.getMove(startSquareNum, targetSquareNum);
@@ -245,7 +244,7 @@ export class MoveService {
     let startIndex = this.numSquaresToEdge[startSquare][2] == 0 ? 1 : 0;
     let endIndex = this.numSquaresToEdge[startSquare][3] == 0 ? 2 : 3;
     let possiblesMoves = this.isPawnStartPosition(startSquare, piece) ? 2 : 1;
-    let increment = piece.color == 'b' ? 8 : -8;
+    let increment = piece.color == 'b' ? -8 : 8;
     let targetSquare = startSquare + increment - 1;
     for (let index = startIndex; index < endIndex; index++) {
       if (index == 0 || index == 2) {
@@ -379,7 +378,10 @@ export class MoveService {
   }
 
   checkIfMate(squareId, pieceId) {
-    let moves: Array<Move> = this.generateMoves(squareId, pieceId);
+    let color = pieceId.charAt(0);
+    let allPossiblesMoves = this.getAllPossiblesMovesExceptKing(color);
+    let moves = allPossiblesMoves.filter(move => this.moveSolveCheck(move, this._resourcesService.getPiece('sq' + move.startSquare)))
+    // let moves2: Array<Move> = this.generateMoves(squareId, pieceId);
     if (!moves.length) {
       this.isCheckmate = true
     } else {
@@ -570,7 +572,10 @@ export class MoveService {
         let possibleMoves = this.checkIfMate(kingNode.id, kingImg.id);
         let index = Math.floor(Math.random() * possibleMoves.length);
         let randomMove = possibleMoves[index];
-        this.drawPiece(kingPiece, randomMove.targetSquare);
+        let pieceNode = document.getElementById('sq' + randomMove.startSquare);
+        let pieceImg = pieceNode.getElementsByTagName('img')[0];
+        let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
+        this.drawPiece(piece, randomMove.targetSquare);
       }
     } else {
       this.choosePiece(color);
@@ -607,11 +612,7 @@ export class MoveService {
       if (targetSquare.hasChildNodes() && targetSquare.getElementsByTagName('img')[0].id.charAt(0) == color) {
         let pieceId = targetSquare.getElementsByTagName('img')[0].id;
         let piece: Piece = this._resourcesService.getPiece(pieceId);
-        if (piece.type == 'p') {
-          let squareId = 'sq' + piece.position;
-          let moves: Array<Move> = this.generatePawnThreats(squareId, pieceId);
-          allPossiblesMoves.push(...moves);
-        } else if (piece.type != 'k') {
+        if (piece.type != 'k') {
           let squareId = 'sq' + piece.position;
           let moves: Array<Move> = this.generateMoves(squareId, pieceId);
           allPossiblesMoves.push(...moves);
