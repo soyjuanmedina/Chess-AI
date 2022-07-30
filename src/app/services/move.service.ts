@@ -13,10 +13,10 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  FEN: string = this.startFEN;
-  // FEN: string = 'rnbqkbnr/pppp1ppp/3Q4/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1';
+  // FEN: string = this.startFEN;
+  FEN: string = 'rnbq1bnr/ppppkpp1/8/4p2Q/8/6B1/PPPPPPPP/RNB1KBNR w KQkq - 0 1';
   colorToMove = 'w';
-  computerPlayBlack: boolean = false;
+  computerPlayBlack: boolean = true;
   isCheckPosition = false;
   isCheckmate = false;
   isPlaying = false;
@@ -692,6 +692,8 @@ export class MoveService {
     innerDiv.appendChild(img);
     if (this.isCheck(piece.color)) {
       this.isCheckPosition = true;
+    } else {
+      this.isCheckPosition = false;
     }
   }
 
