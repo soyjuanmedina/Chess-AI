@@ -1,3 +1,4 @@
+import { ThrowStmt } from '@angular/compiler';
 import { Injectable } from '@angular/core';
 import { Move } from "../interfaces/move.interface";
 import { Piece } from '../interfaces/piece.interface';
@@ -13,17 +14,34 @@ export class MoveService {
   numSquaresToEdge = [[]];
   startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   FEN: string = this.startFEN;
-  // FEN: string = 'rnbq1bnr/pppp4/4k2p/4Pp2/8/6Q1/PPPP1PPP/RNB1KBNR b KQkq - 0 1';
+  // FEN: string = 'rnbqkbnr/pppp1ppp/3Q4/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1';
   colorToMove = 'w';
-  computerPlayBlack: boolean = true;
+  computerPlayBlack: boolean = false;
   isCheckPosition = false;
   isCheckmate = false;
   isPlaying = false;
   checkThreatMove: Move;
   enPassant: number;
+  isTablas = false;
+
+  // Para el enroque untoched blak king untouched black short rock
+  ubk: boolean = true;
+  ubsr: boolean = true;
+  ublr: boolean = true;
+  uwk: boolean = true;
+  uwsr: boolean = true;
+  uwlr: boolean = true;
 
   constructor(public _resourcesService: ResourcesService) {
     this.preComputedMoveData();
+    if (this.FEN.charAt(0) != 'r') {
+      this.ubk = false;
+      this.ubsr = false;
+      this.ublr = false;
+      this.uwk = false;
+      this.uwsr = false;
+      this.uwlr = false;
+    }
   }
 
   generateMoves(startSquareId, pieceId) {
@@ -88,7 +106,43 @@ export class MoveService {
         }
       }
     }
+    if (this.itsPossibleShortCastling(piece.color)) {
+      let targetSquare = piece.color == 'b' ? 7 : 63;
+      let move: Move = this.getMove(startSquareNum, targetSquare);
+      moves.push(move);
+    }
+    if (this.itsPossibleLongCastling(piece.color)) {
+      let targetSquare = piece.color == 'b' ? 3 : 59;
+      let move: Move = this.getMove(startSquareNum, targetSquare);
+      moves.push(move);
+    }
     return moves;
+  }
+
+  itsPossibleShortCastling(color) {
+    let solution = false
+    if (color == 'b' && !document.getElementById('sq6').hasChildNodes()
+      && !document.getElementById('sq7').hasChildNodes() && this.ubsr) {
+      solution = true;
+    } else if (color == 'w' && !document.getElementById('sq62').hasChildNodes()
+      && !document.getElementById('sq63').hasChildNodes() && this.uwsr) {
+      solution = true;
+    }
+    return solution;
+  }
+
+  itsPossibleLongCastling(color) {
+    let solution = false
+    if (color == 'b' && !document.getElementById('sq4').hasChildNodes()
+      && !document.getElementById('sq3').hasChildNodes()
+      && !document.getElementById('sq2').hasChildNodes() && this.ublr) {
+      solution = true;
+    } else if (color == 'w' && !document.getElementById('sq60').hasChildNodes()
+      && !document.getElementById('sq59').hasChildNodes()
+      && !document.getElementById('sq58').hasChildNodes() && this.uwlr) {
+      solution = true;
+    }
+    return solution;
   }
 
   itsSquareUnderThret(targetSquareNum: number, attackColor: string) {
@@ -391,7 +445,7 @@ export class MoveService {
     }
   }
 
-  protecKing(moves: Array<Move>) {
+  protecKing(moves: Array<Move>, pieceType: string) {
     let kingSrc = "assets/pieces/" + this.colorToMove + "k.png"
     let kingPlace: any = document.querySelectorAll('img[src="' + kingSrc + '"]');
     let kingId = kingPlace[0].id;
@@ -399,98 +453,117 @@ export class MoveService {
     let kingNode = document.getElementById(kingId)
     let pieceNum = moves[0].startSquare;
     let kingNum = kingId.slice(2);
-
     let bigger = pieceNum > kingNum ? pieceNum : kingNum
     let smaller = pieceNum < kingNum ? pieceNum : kingNum
     let threat = false;
-    if ((bigger - smaller) % 8 == 0) {
-      for (let index = 0; index < moves.length; index++) {
-        if ((moves[index].targetSquare - smaller) % 8 == 0) {
-          let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
-          if (innerDiv.hasChildNodes()) {
-            let pieceImg = innerDiv.getElementsByTagName('img')[0];
-            let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
-            let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'r' : false
-            if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
-              threat = true;
+    if (pieceType == 'n') {
+      console.log('es canballo',);
+    } else {
+      if ((bigger - smaller) % 8 == 0) {
+        for (let index = 0; index < moves.length; index++) {
+          if ((moves[index].targetSquare - smaller) % 8 == 0) {
+            let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
+            if (innerDiv.hasChildNodes()) {
+              let pieceImg = innerDiv.getElementsByTagName('img')[0];
+              let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
+              let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'r' : false
+              if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
+                threat = true;
+              }
             }
           }
         }
-      }
-      if (threat) {
-        moves = moves.filter(move => (move.targetSquare - smaller) % 8 == 0)
-      }
-    } else if ((bigger - smaller) % 7 == 0) {
-      for (let index = 0; index < moves.length; index++) {
-        if ((moves[index].targetSquare - smaller) % 7 == 0) {
-          let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
-          if (innerDiv.hasChildNodes()) {
-            let pieceImg = innerDiv.getElementsByTagName('img')[0];
-            let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
-            let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'b' : false
-            if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
-              threat = true;
+        if (threat) {
+          moves = moves.filter(move => (move.targetSquare - smaller) % 8 == 0)
+        }
+      } else if ((bigger - smaller) % 7 == 0) {
+        for (let index = 0; index < moves.length; index++) {
+          if ((moves[index].targetSquare - smaller) % 7 == 0) {
+            let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
+            if (innerDiv.hasChildNodes()) {
+              let pieceImg = innerDiv.getElementsByTagName('img')[0];
+              let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
+              let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'b' : false
+              if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
+                threat = true;
+              }
             }
           }
         }
-      }
-      if (threat) {
-        moves = moves.filter(move => (move.targetSquare - smaller) % 7 == 0)
-      }
-    } else if ((bigger - smaller) % 9 == 0) {
+        if (threat) {
+          moves = moves.filter(move => (move.targetSquare - smaller) % 7 == 0)
+        }
+      } else if ((bigger - smaller) % 9 == 0) {
 
-      for (let index = 0; index < moves.length; index++) {
-        if ((moves[index].targetSquare - smaller) % 9 == 0) {
-          let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
-          if (innerDiv.hasChildNodes()) {
-            let pieceImg = innerDiv.getElementsByTagName('img')[0];
-            let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
-            let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'b' : false
-            if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
-              threat = true;
+        for (let index = 0; index < moves.length; index++) {
+          if ((moves[index].targetSquare - smaller) % 9 == 0) {
+            let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
+            if (innerDiv.hasChildNodes()) {
+              let pieceImg = innerDiv.getElementsByTagName('img')[0];
+              let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
+              let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'b' : false
+              if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
+                threat = true;
+              }
             }
           }
         }
+        if (threat) {
+          moves = moves.filter(move => (move.targetSquare - smaller) % 9 == 0)
+        }
       }
-      if (threat) {
-        moves = moves.filter(move => (move.targetSquare - smaller) % 9 == 0)
-      }
-    }
-    else if ((bigger - smaller) < 9) {
-      for (let index = 0; index < moves.length; index++) {
-        if ((moves[index].targetSquare - smaller) < 9) {
-          let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
-          if (innerDiv.hasChildNodes()) {
-            let pieceImg = innerDiv.getElementsByTagName('img')[0];
-            let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
-            let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'r' : false
-            if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
-              threat = true;
+      else if ((bigger - smaller) < 9) {
+        for (let index = 0; index < moves.length; index++) {
+          if ((moves[index].targetSquare - smaller) < 9) {
+            let innerDiv = document.getElementById('sq' + moves[index].targetSquare);
+            if (innerDiv.hasChildNodes()) {
+              let pieceImg = innerDiv.getElementsByTagName('img')[0];
+              let piece: Piece = this._resourcesService.getPiece(pieceImg.id);
+              let pieceIsThreat = true ? piece.type == 'q' || piece.type == 'r' : false
+              if (!this.isFriendPiece(pieceNum, piece.position) && pieceIsThreat) {
+                threat = true;
+              }
             }
           }
         }
+        if (threat) {
+          moves = moves.filter(move => (move.targetSquare - smaller) < 9)
+        }
       }
-      if (threat) {
-        moves = moves.filter(move => (move.targetSquare - smaller) < 9)
-      }
+
     }
     return moves
+  }
+
+  checkWithOutPiece(pieceId: string) {
+    let pieceNode = document.getElementById(pieceId);
+    let color = pieceId.charAt(0) == 'b' ? 'w' : 'b';
+    let pieceDiv = pieceNode.parentNode;
+    document.getElementById(pieceId).remove();
+    let solution = this.isCheck(color);
+    pieceDiv.appendChild(pieceNode);
+    this._resourcesService.cleanClasses(['check'])
+    return solution;
   }
 
   drag(ev) {
     let pieceId = ev.target.id;
     let squareId = ev.target.parentNode.id;
     ev.dataTransfer.setData("pieceId", pieceId);
-    let moves: Array<Move> = this.generateMoves(squareId, pieceId);
     let piece: Piece = this._resourcesService.getPiece(pieceId);
-    if ((this.colorToMove == piece.color)) {
-      if (this.isCheckPosition) {
-        moves = moves.filter(move => this.moveSolveCheck(move, piece))
-      } else if (piece.type != 'k') {
-        moves = this.protecKing(moves)
+    if (piece.type == 'n' && this.checkWithOutPiece(pieceId)) {
+    } else {
+      let moves: Array<Move> = this.generateMoves(squareId, pieceId);
+      if ((this.colorToMove == piece.color)) {
+        if (this.isCheckPosition) {
+          moves = moves.filter(move => this.moveSolveCheck(move, piece));
+        } else if (piece.type != 'k') {
+          moves = this.protecKing(moves, piece.type)
+        }
+        this.drawMoves(moves);
       }
-      this.drawMoves(moves);
     }
+
   }
 
   drop(ev) {
@@ -513,17 +586,75 @@ export class MoveService {
         delete this.enPassant
       }
       this.drawPiece(piece, square);
+      this.touchPiece(piece);
+      if (piece.type == 'k' && this.isCastlingMove(piece.position, square)) {
+        if (square == 7) {
+          let rock: Piece = this._resourcesService.getPiece('br8');
+          this.drawPiece(rock, 6);
+        } else if (square == 63) {
+          let rock: Piece = this._resourcesService.getPiece('wr64');
+          this.drawPiece(rock, 62);
+        } else if (square == 3) {
+          let rock: Piece = this._resourcesService.getPiece('br1');
+          this.drawPiece(rock, 4);
+        } else if (square == 59) {
+          let rock: Piece = this._resourcesService.getPiece('wr57');
+          this.drawPiece(rock, 60);
+        }
+        this.drawPiece(piece, square);
+
+      }
       setTimeout(() => {
-        if (this.colorToMove == 'b' && this.computerPlayBlack && this.isPlaying) {
+        if (this.colorToMove == 'b' && this.computerPlayBlack && this.isPlaying && !this.isCheckmate && !this.isTablas) {
           this.doNextMove('b');
         }
       }
         , 1000);
-
-
+    }
+    if (this.isReyAhogado(this.colorToMove)) {
+      console.log('isReyAhogado');
+      this.isTablas = true;
     }
     this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
+  }
 
+  isReyAhogado(color) {
+    let kingSrc = "assets/pieces/" + color + "k.png"
+    let kingPlace: any = document.querySelectorAll('img[src="' + kingSrc + '"]');
+    let kingId = kingPlace[0].id;
+    let kingDiv = kingPlace[0].parentNode;
+    let kingNode = document.getElementById(kingId);
+    let king = this._resourcesService.getPiece(kingId);
+    let getAllPossiblesMovesExceptKing = this.getAllPossiblesMovesExceptKing(color);
+    let allKingPossiblesMoves = this.generateKingMovings('sq' + king.position, king);
+    if (getAllPossiblesMovesExceptKing.length + allKingPossiblesMoves.length < 1) {
+      return true
+    }
+    return false;
+  }
+
+  isCastlingMove(piecePosition, square) {
+    if (piecePosition - square != 1) {
+      return true;
+    }
+    return false;
+
+  }
+
+  touchPiece(piece) {
+    if (piece == { type: 'r', color: 'w', position: 57 }) {
+      this.uwlr = false
+    } else if (piece == { type: 'r', color: 'w', position: 64 }) {
+      this.uwsr = false
+    } else if (piece == { type: 'k', color: 'w', position: 61 }) {
+      this.uwk = false
+    } else if (piece == { type: 'r', color: 'b', position: 1 }) {
+      this.ublr = false
+    } else if (piece == { type: 'r', color: 'b', position: 8 }) {
+      this.ubsr = false
+    } else if (piece == { type: 'k', color: 'b', position: 61 }) {
+      this.ubk = false
+    }
   }
 
   isPossibleMove(node) {
@@ -559,7 +690,9 @@ export class MoveService {
     img.setAttribute("draggable", "true");
     img.addEventListener('dragstart', this.drag.bind(this));
     innerDiv.appendChild(img);
-    this.isCheckPosition = this.isCheck(piece.color);
+    if (this.isCheck(piece.color)) {
+      this.isCheckPosition = true;
+    }
   }
 
   // Funciones AI
@@ -624,7 +757,8 @@ export class MoveService {
         if (piece.type != 'k') {
           let moves: Array<Move>;
           let squareId = 'sq' + piece.position;
-          if (piece.type == 'p') {
+          // if (piece.type == 'p') {
+          if (0) {
             moves = this.generatePawnThreats(squareId, this._resourcesService.getPiece(pieceId));
           } else {
             moves = this.generateMoves(squareId, pieceId);
@@ -649,7 +783,6 @@ export class MoveService {
         if (piece.type == 'k' && piece.color != color) {
           targetSquare.classList.add('check');
           this.checkThreatMove = allPossiblesMoves[index];
-          // console.log('checkThreatMove', this.checkThreatMove);
           this.checkIfMate(targetSquare.id, pieceId);
           return true;
         }
@@ -659,9 +792,6 @@ export class MoveService {
   }
 
   moveSolveCheck(move: Move, piece: Piece) {
-    if (move.startSquare == 16 && move.targetSquare == 23) {
-      console.log('moveSolveCheck', this.checkThreatMove, move.targetSquare, move.targetSquare == this.checkThreatMove.startSquare)
-    }
     let attackSquare = document.getElementById('sq' + this.checkThreatMove.startSquare);
     let pieceId = attackSquare.getElementsByTagName('img')[0].id;
     let attackPiece: Piece = this._resourcesService.getPiece(pieceId);
@@ -674,20 +804,20 @@ export class MoveService {
       let bigger = this.checkThreatMove.startSquare > this.checkThreatMove.targetSquare ? this.checkThreatMove.startSquare : this.checkThreatMove.targetSquare
       let smaller = this.checkThreatMove.startSquare < this.checkThreatMove.targetSquare ? this.checkThreatMove.startSquare : this.checkThreatMove.targetSquare
       if ((bigger - smaller) % 8 == 0) {
-        for (let index = smaller; index < bigger; index = index + 8) {
+        for (let index = smaller + 8; index < bigger; index = index + 8) {
           inBetweenSquares.push(index);
         }
       } else if ((bigger - smaller) % 7 == 0) {
-        for (let index = smaller; index < bigger; index = index + 7) {
+        for (let index = smaller + 7; index < bigger; index = index + 7) {
           inBetweenSquares.push(index);
         }
       } else if ((bigger - smaller) % 9 == 0) {
-        for (let index = smaller; index < bigger; index = index + 9) {
+        for (let index = smaller + 9; index < bigger; index = index + 9) {
           inBetweenSquares.push(index);
         }
       }
       else if ((bigger - smaller) < 9) {
-        for (let index = smaller; index < bigger; index++) {
+        for (let index = smaller + 1; index < bigger; index++) {
           inBetweenSquares.push(index);
         }
       }

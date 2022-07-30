@@ -120,8 +120,9 @@
 
 <section id="board"></section>
 
-<div *ngIf="_moveService.isCheckmate">
-  <h1>!!Jaque Mate!!</h1>
+<div *ngIf="_moveService.isCheckmate || _moveService.isTablas">
+  <h1 *ngIf="_moveService.isCheckmate">!!Jaque Mate!!</h1>
+  <h1 *ngIf="_moveService.isTablas">!!Rey Ahogado!! Tablas</h1>
   <button class="btn btn-primary btn-block mt-1" (click)="playAgain()">Volver a jugar
   </button>
 </div>
