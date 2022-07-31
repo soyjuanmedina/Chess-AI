@@ -1,9 +1,6 @@
 <!-- <canvas id="board" width="600" height="600">
 
 </canvas> -->
-<div>{{_moveService.isCheckPosition}}</div>
-
-
 <nav class="navbar navbar-light bg-light">
   <a class="navbar-brand"></a>
   <form class="form-inline">
@@ -94,6 +91,8 @@
             <span *ngIf="_moveService.colorToMove == 'b'">negras</span>
           </h4>
         </div>
+      </div>
+      <div *ngIf="!_moveService.isCheckmate" class="row">
         <div class="col-6">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="computerPlayBlack"
@@ -101,6 +100,17 @@
               [(ngModel)]=_moveService.computerPlayBlack>
             <label class="form-check-label" for="computerPlayBlack">
               La computadora juega negras
+            </label>
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="computerPlayWhite"
+              name="computerPlayWhite" formControlName="computerPlayWhite"
+              [(ngModel)]=_moveService.computerPlayWhite>
+            <label class="form-check-label" for="computerPlayWhite">
+              La computadora juega blancas
             </label>
           </div>
         </div>
@@ -123,8 +133,11 @@
 <section id="board"></section>
 
 <div *ngIf="_moveService.isCheckmate || _moveService.isTablas">
-  <h1 *ngIf="_moveService.isCheckmate">!!Jaque Mate!!</h1>
-  <h1 *ngIf="_moveService.isTablas">!!Rey Ahogado!! Tablas</h1>
+  <h1 *ngIf="_moveService.isCheckmate">!!Jaque Mate!! Ganan
+    <span *ngIf="_moveService.colorToMove == 'w'">negras</span>
+    <span *ngIf="_moveService.colorToMove == 'b'">blancas</span>
+  </h1>
+  <h1 *ngIf="_moveService.isTablas">Tablas</h1>
   <button class="btn btn-primary btn-block mt-1" (click)="playAgain()">Volver a jugar
   </button>
 </div>

@@ -26,11 +26,13 @@ export class AppComponent implements OnInit {
       darkColor: new FormControl(),
       squareSize: new FormControl(),
       fenPosition: new FormControl(),
-      computerPlayBlack: new FormControl()
+      computerPlayBlack: new FormControl(),
+      computerPlayWhite: new FormControl()
     })
     this.boardConfiguration.disable();
     this.boardConfiguration.controls['fenPosition'].enable();
     this.boardConfiguration.controls['computerPlayBlack'].enable();
+    this.boardConfiguration.controls['computerPlayWhite'].enable();
   }
 
   setConfiguring() {
@@ -110,6 +112,11 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.drawBoard();
     this.loadPositionFromFem(this._moveService.FEN);
+    if (this._moveService.isCheck('b') || this._moveService.isCheck('w')) {
+      this._moveService.isCheckPosition = true;
+    } else {
+      this._moveService.isCheckPosition = false;
+    }
   }
 
   // Funciones edición de la configuración

@@ -1,4 +1,3 @@
-import { ThrowStmt } from '@angular/compiler';
 import { Injectable } from '@angular/core';
 import { Move } from "../interfaces/move.interface";
 import { Piece } from '../interfaces/piece.interface';
@@ -13,10 +12,12 @@ export class MoveService {
   directionOffsets: Array<number> = [-8, 8, -1, 1, -7, 7, -9, 9];
   numSquaresToEdge = [[]];
   startFEN: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  // FEN: string = this.startFEN;
-  FEN: string = 'rnbq1bnr/ppppkpp1/8/4p2Q/8/6B1/PPPPPPPP/RNB1KBNR w KQkq - 0 1';
+  FEN: string = this.startFEN;
+  // FEN: string = '8/8/8/8/8/1k3K2/4b3/8 b KQkq - 0 1';
+  // FEN: string = '8/8/8/8/8/1k6/4b3/5K2 b KQkq - 0 1';
   colorToMove = 'w';
   computerPlayBlack: boolean = true;
+  computerPlayWhite: boolean = true;
   isCheckPosition = false;
   isCheckmate = false;
   isPlaying = false;
@@ -457,7 +458,6 @@ export class MoveService {
     let smaller = pieceNum < kingNum ? pieceNum : kingNum
     let threat = false;
     if (pieceType == 'n') {
-      console.log('es canballo',);
     } else {
       if ((bigger - smaller) % 8 == 0) {
         for (let index = 0; index < moves.length; index++) {
@@ -575,7 +575,6 @@ export class MoveService {
       let increment = piece.color == 'b' ? 8 : -8;
       if (this.enPassant) {
         if (this.enPassant + increment == square) {
-          console.log('this.enPassant', this.enPassant + increment, square);
           let innerDiv = document.getElementById('sq' + this.enPassant);
           innerDiv.removeChild(innerDiv.firstChild);
         }
@@ -607,15 +606,31 @@ export class MoveService {
       setTimeout(() => {
         if (this.colorToMove == 'b' && this.computerPlayBlack && this.isPlaying && !this.isCheckmate && !this.isTablas) {
           this.doNextMove('b');
+        } else if (this.colorToMove == 'w' && this.computerPlayWhite && this.isPlaying && !this.isCheckmate && !this.isTablas) {
+          this.doNextMove('w');
         }
       }
-        , 1000);
+        , 200);
     }
     if (this.isReyAhogado(this.colorToMove)) {
-      console.log('isReyAhogado');
       this.isTablas = true;
     }
     this._resourcesService.cleanClasses(['possibleMove', 'possibleCapture']);
+  }
+
+  checkTablas() {
+    let solution = false;
+    let count = 0;
+    for (let index = 1; index < 65; index++) {
+      let targetSquare = document.getElementById('sq' + index);
+      if (targetSquare.hasChildNodes()) {
+        count++;
+      }
+    }
+    if (count < 3) {
+      solution = true;
+    }
+    return solution;
   }
 
   isReyAhogado(color) {
@@ -717,6 +732,17 @@ export class MoveService {
     } else {
       this.choosePiece(color);
     }
+    setTimeout(() => {
+      if (this.colorToMove == 'b' && this.computerPlayBlack && this.isPlaying && !this.isCheckmate && !this.isTablas) {
+        this.doNextMove('b');
+      } else if (this.colorToMove == 'w' && this.computerPlayWhite && this.isPlaying && !this.isCheckmate && !this.isTablas) {
+        this.doNextMove('w');
+      }
+    }
+      , 200);
+    if (this.checkTablas()) {
+      this.isTablas = true;
+    }
   }
 
   choosePiece(color: string) {
@@ -760,12 +786,10 @@ export class MoveService {
           let moves: Array<Move>;
           let squareId = 'sq' + piece.position;
           // if (piece.type == 'p') {
-          if (0) {
+          if (this.isCheckPosition && piece.type == 'p') {
             moves = this.generatePawnThreats(squareId, this._resourcesService.getPiece(pieceId));
           } else {
             moves = this.generateMoves(squareId, pieceId);
-            if (piece.type == 'q') {
-            }
           }
           allPossiblesMoves.push(...moves);
         }
@@ -829,8 +853,6 @@ export class MoveService {
     }
     return false;
   }
-
-
 
 
 
